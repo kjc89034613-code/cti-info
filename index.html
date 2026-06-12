@@ -214,9 +214,11 @@
 
     /* 툴바: 검색 + 신규등록 한 줄 */
     .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; }
-    .toolbar input[type="search"] { flex: 1 1 auto; height: 44px; order: 1; }
+    .toolbar input[type="search"] { flex: 1 1 auto; height: 46px; order: 1; }
     .t-spacer { display: none; }
-    .btn-add { order: 2; height: 44px; padding: 0 18px; flex: 0 0 auto; }
+    .btn-add { order: 2; height: 46px; padding: 0 20px; flex: 0 0 auto; align-self: stretch;
+      box-shadow: 0 2px 0 #3730a3, 0 3px 6px rgba(79,70,229,0.3); }
+    .btn-add:active { box-shadow: 0 1px 0 #3730a3; }
     .btn-excel { display: none; }  /* 모바일에선 엑셀 버튼 숨김 */
 
     /* 통계를 탭처럼: 한 줄 3등분, 누르면 전환 */
@@ -238,9 +240,9 @@
     .panel.web-only { display: none; }
     .panel.m-use, .panel.m-hold { display: none; }
     .panel.m-use.active, .panel.m-hold.active { display: block; }
-    /* 패널 헤더 컴팩트 */
-    .panel-head { padding: 9px 14px 9px 18px; font-size: 14.5px; }
-    .panel-head .count { padding: 2px 11px; font-size: 13px; }
+    /* 모바일: 패널 헤더 제거 (통계 탭으로 구분되므로 불필요) */
+    .panel.m-use .panel-head, .panel.m-hold .panel-head { display: none; }
+    .panel.m-use, .panel.m-hold { border: 1px solid var(--border); }
 
     /* 표 형태 유지 (카드 아님), 컴팩트 */
     .panel-body { overflow-x: auto; }
