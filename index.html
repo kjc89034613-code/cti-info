@@ -212,17 +212,18 @@
     .page-header h1 { font-size: 20px; }
     .header-line { margin-bottom: 13px; }
 
-    /* 툴바: 검색 + 신규등록 한 줄 */
-    .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; }
-    .toolbar input[type="search"] { flex: 1 1 auto; height: 46px; order: 1; }
+    /* 툴바: 검색 + 신규등록 한 줄, 통계는 다음 줄 */
+    .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar input[type="search"] { flex: 1 1 140px; min-width: 140px; height: 46px; order: 1; font-size: 14px; padding: 0 12px; }
     .t-spacer { display: none; }
-    .btn-add { order: 2; height: 46px; padding: 0 20px; flex: 0 0 auto; align-self: stretch;
+    .btn-add { order: 2; height: 46px; padding: 0 16px; flex: 0 0 auto; white-space: nowrap;
+      align-self: auto; font-size: 14.5px;
       box-shadow: 0 2px 0 #3730a3, 0 3px 6px rgba(79,70,229,0.3); }
     .btn-add:active { box-shadow: 0 1px 0 #3730a3; }
     .btn-excel { display: none; }  /* 모바일에선 엑셀 버튼 숨김 */
+    .stats { order: 3; flex: 1 1 100%; width: 100%; gap: 7px; margin: 0 0 12px; }
 
     /* 통계를 탭처럼: 한 줄 3등분, 누르면 전환 */
-    .stats { width: 100%; gap: 7px; margin-bottom: 12px; order: 3; }
     .stat {
       flex: 1 1 0; justify-content: center; height: 46px; padding: 0 6px; gap: 6px;
       cursor: pointer; border-radius: 9px;
