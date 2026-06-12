@@ -214,11 +214,11 @@
 
     /* 툴바: 검색 + 신규등록 한 줄, 통계는 다음 줄 */
     .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-    .toolbar input[type="search"] { flex: 1 1 140px; min-width: 140px; height: 38px; order: 1; font-size: 13.5px; padding: 0 12px; }
+    .toolbar input[type="search"] { flex: 1 1 140px; min-width: 140px; height: 32px; order: 1; font-size: 13px; padding: 0 11px; }
     .t-spacer { display: none; }
-    .btn-add { order: 2; height: 38px; padding: 0 16px; flex: 0 0 auto; white-space: nowrap;
-      align-self: auto; font-size: 13.5px;
-      box-shadow: 0 2px 0 #3730a3, 0 3px 6px rgba(79,70,229,0.3); }
+    .btn-add { order: 2; height: 32px; padding: 0 16px; flex: 0 0 auto; white-space: nowrap;
+      align-self: auto; font-size: 13px; border-radius: 8px;
+      box-shadow: 0 2px 0 #3730a3, 0 3px 5px rgba(79,70,229,0.28); }
     .btn-add:active { box-shadow: 0 1px 0 #3730a3; }
     .btn-excel { display: none; }  /* 모바일에선 엑셀 버튼 숨김 */
     .stats { order: 3; flex: 1 1 100%; width: 100%; gap: 7px; margin: 0 0 12px; }
@@ -287,7 +287,7 @@
     <div class="stat use" onclick="mStatTab('use')"><span class="label"><span class="lbl-web">사용 수량</span><span class="lbl-m">사용중</span></span><span class="num" id="statUse">0</span></div>
     <div class="stat hold" onclick="mStatTab('hold')"><span class="label"><span class="lbl-web">보유 수량</span><span class="lbl-m">보유중</span></span><span class="num" id="statHold">0</span></div>
   </div>
-  <button class="btn3d btn-add" onclick="openAddModal()">신규등록</button>
+  <button class="btn3d btn-add" onclick="openAddModal()">등록</button>
   <button class="btn3d btn-excel" onclick="exportExcel()">엑셀 다운로드</button>
 </div>
 
