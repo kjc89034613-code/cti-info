@@ -95,6 +95,7 @@
   .stat.total .num { background: #3f3f46; }
   .stat.use .num { background: var(--accent); }
   .stat.hold .num { background: #c2410c; }
+  .lbl-m { display: none; }  /* 모바일 짧은 라벨은 기본 숨김 */
 
   /* 모바일 탭 (웹에서는 숨김) */
   .mtabs { display: none; gap: 2px; margin-bottom: 18px; background: #ececef; padding: 4px; border-radius: 11px; }
@@ -204,42 +205,62 @@
 
   /* ===== 모바일 ===== */
   @media (max-width: 860px) {
-    body { padding: 13px; }
-    .mtabs { display: flex; }
-    .toolbar .btn3d { flex: 1 1 auto; }
-    .stats { width: 100%; justify-content: space-between; }
-    .stat { flex: 1 1 auto; justify-content: center; padding: 9px 8px; gap: 5px; }
-    .stat .label { font-size: 13px; }
-    .stat .num { font-size: 14px; }
-    /* 모바일 카드뷰: 가운데정렬 해제, 라벨 좌 / 값 우 */
-    tbody td { text-align: right !important; }
-    tbody td.cell-ext { text-align: right !important; }
-    /* 모바일에선 현장 색상 배경 해제 (카드라 불필요) */
-    tbody td.col-from, tbody td.col-send, tbody td.col-cur { background: transparent; }
-    /* 모바일: 웹 통합 패널 숨기고, 선택된 모바일 탭 패널만 표시 */
+    body { padding: 11px; }
+    .page-header { gap: 10px; margin-bottom: 6px; }
+    .home-icon { width: 38px; height: 38px; border-radius: 9px; }
+    .home-icon svg { width: 20px; height: 20px; }
+    .page-header h1 { font-size: 20px; }
+    .header-line { margin-bottom: 13px; }
+
+    /* 툴바: 검색 + 신규등록 한 줄 */
+    .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; }
+    .toolbar input[type="search"] { flex: 1 1 auto; height: 44px; order: 1; }
+    .t-spacer { display: none; }
+    .btn-add { order: 2; height: 44px; padding: 0 18px; flex: 0 0 auto; }
+    .btn-excel { display: none; }  /* 모바일에선 엑셀 버튼 숨김 */
+
+    /* 통계를 탭처럼: 한 줄 3등분, 누르면 전환 */
+    .stats { width: 100%; gap: 7px; margin-bottom: 12px; order: 3; }
+    .stat {
+      flex: 1 1 0; justify-content: center; height: 46px; padding: 0 6px; gap: 6px;
+      cursor: pointer; border-radius: 9px;
+    }
+    .stat .label { font-size: 13.5px; }
+    .lbl-web { display: none; }   /* 모바일: 긴 라벨 숨김 */
+    .lbl-m { display: inline; }   /* 모바일: 짧은 라벨 표시 */
+    .stat .num { font-size: 13.5px; padding: 3px 9px; min-width: 28px; }
+    /* 선택된 통계 탭 강조 */
+    .stat.total { cursor: default; }
+    .stat.m-active.use { border-color: var(--accent); background: var(--accent-soft); }
+    .stat.m-active.hold { border-color: #c2410c; background: #fff7ed; }
+
+    /* 패널 표시: 선택된 모바일 탭만 */
     .panel.web-only { display: none; }
     .panel.m-use, .panel.m-hold { display: none; }
     .panel.m-use.active, .panel.m-hold.active { display: block; }
+    /* 패널 헤더 컴팩트 */
+    .panel-head { padding: 9px 14px 9px 18px; font-size: 14.5px; }
+    .panel-head .count { padding: 2px 11px; font-size: 13px; }
 
-    /* 카드형 */
-    .panel-body { overflow-x: visible; }
-    table, thead, tbody, tr, td { display: block; width: 100%; }
-    thead { display: none; }
-    tbody tr { border-bottom: 9px solid #f1f5f9; }
-    tbody tr:last-child { border-bottom: 0; }
-    tbody td {
-      display: flex; justify-content: space-between; align-items: center; gap: 12px;
-      padding: 12px 16px; border-bottom: 1px dashed var(--divider);
-      white-space: normal; text-align: right; overflow: visible; font-size: 15.5px;
-    }
-    tbody td::before {
-      content: attr(data-label); font-weight: 700; color: var(--text-muted);
-      font-size: 14px; text-align: left; flex: 0 0 auto;
-    }
-    tbody td.cell-ext { font-size: 18px; background: #f8fafc; }
-    tbody td input { flex: 1 1 58%; max-width: 60%; }
-    tbody td.cell-actions { justify-content: flex-end; }
-    tbody td.cell-actions::before { content: ""; }
+    /* 표 형태 유지 (카드 아님), 컴팩트 */
+    .panel-body { overflow-x: auto; }
+    table { font-size: 13px; }
+    thead th { padding: 9px 3px; font-size: 12px; }
+    tbody td { padding: 9px 3px; font-size: 13px; }
+    .cell-ext { font-size: 13.5px; }
+    .badge { padding: 2px 7px; font-size: 11.5px; }
+    .icon-btn { padding: 3px; }
+    .icon-btn svg { width: 16px; height: 16px; }
+    .cell-actions { white-space: nowrap; padding: 6px 2px; }
+    .cell-actions .icon-btn { padding: 2px; }
+    /* 모바일 표 컬럼폭: 내선/현장/IP/상태/관리 */
+    .m-col-ext { width: 17%; }
+    .m-col-site { width: 33%; }
+    .m-col-ip { width: 19%; }
+    .m-col-st { width: 15%; }
+    .m-col-act { width: 16%; }
+    .m-col-ip + col {} /* noop */
+    tbody td:nth-child(3) { white-space: normal; word-break: break-all; }
   }
 </style>
 </head>
@@ -260,17 +281,11 @@
   <span class="t-spacer"></span>
   <div class="stats">
     <div class="stat total"><span class="label">전체 수량</span><span class="num" id="statTotal">0</span></div>
-    <div class="stat use"><span class="label">사용 수량</span><span class="num" id="statUse">0</span></div>
-    <div class="stat hold"><span class="label">보유 수량</span><span class="num" id="statHold">0</span></div>
+    <div class="stat use" onclick="mStatTab('use')"><span class="label"><span class="lbl-web">사용 수량</span><span class="lbl-m">사용중</span></span><span class="num" id="statUse">0</span></div>
+    <div class="stat hold" onclick="mStatTab('hold')"><span class="label"><span class="lbl-web">보유 수량</span><span class="lbl-m">보유중</span></span><span class="num" id="statHold">0</span></div>
   </div>
   <button class="btn3d btn-add" onclick="openAddModal()">신규등록</button>
   <button class="btn3d btn-excel" onclick="exportExcel()">엑셀 다운로드</button>
-</div>
-
-<!-- 모바일 탭 -->
-<div class="mtabs">
-  <button class="m-tab-use active" onclick="switchMTab('use', this)">사용중</button>
-  <button class="m-tab-hold" onclick="switchMTab('hold', this)">보유중</button>
 </div>
 
 <div class="panels" id="panels"></div>
@@ -368,16 +383,19 @@ function getFiltered() {
   return [...rows].sort((a,b)=>(parseInt(a.ext)||0)-(parseInt(b.ext)||0));
 }
 
-function switchMTab(tab, btn) {
+function mStatTab(tab) {
   mTab = tab;
-  document.querySelectorAll('.mtabs button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
   applyMTab();
 }
 function applyMTab() {
+  // 패널 표시
   document.querySelectorAll('.panel.m-use, .panel.m-hold').forEach(p=>p.classList.remove('active'));
   const t = document.querySelector('.panel.m-'+mTab);
   if (t) t.classList.add('active');
+  // 통계 탭 강조
+  document.querySelectorAll('.stat').forEach(s=>s.classList.remove('m-active'));
+  const ss = document.querySelector('.stat.'+mTab);
+  if (ss) ss.classList.add('m-active');
 }
 
 // ===== 렌더 =====
@@ -461,7 +479,7 @@ function renderWebTable(rows) {
   </div>`;
 }
 
-// 모바일: 5컬럼 (내선/현재현장/IP/상태/관리)
+// 모바일: 5컬럼 표 (내선/현재현장/IP/상태/관리)
 function renderMobilePanel(cls, title, rows) {
   const isHold = cls === 'm-hold';
   let body = '';
@@ -473,19 +491,27 @@ function renderMobilePanel(cls, title, rows) {
       const st = statusOf(r);
       const badge = st==='use' ? '<span class="badge use">사용중</span>' : '<span class="badge hold">보유중</span>';
       trs += `<tr>
-        <td class="cell-ext" data-label="내선번호">${esc(r.ext)}</td>
-        <td data-label="현재 사용 현장">${esc(curSite(r))}</td>
-        <td data-label="IP 정보">${esc(r.ip)}</td>
-        <td data-label="상태">${badge}</td>
+        <td class="cell-ext">${esc(r.ext)}</td>
+        <td>${esc(curSite(r))}</td>
+        <td>${esc(r.ip)}</td>
+        <td>${badge}</td>
         <td class="cell-actions">
           <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
           <button class="icon-btn del" onclick="deleteRow(${r.id})" title="삭제">${ICON_DEL}</button>
         </td>
       </tr>`;
     }
-    body = `<table><tbody>${trs}</tbody></table>`;
+    body = `<table>
+      <colgroup>
+        <col class="m-col-ext"><col class="m-col-site"><col class="m-col-ip"><col class="m-col-st"><col class="m-col-act">
+      </colgroup>
+      <thead><tr>
+        <th>내선번호</th><th>현재 사용 현장</th><th>IP 정보</th><th>상태</th><th>관리</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
   }
-  return `<div class="panel ${cls} ${isHold?'hold':''}">
+  return `<div class="panel ${cls} ${isHold?'hold':''} ${cls==='m-'+mTab?'active':''}">
     <div class="panel-head">${title}<span class="count">${rows.length}</span></div>
     <div class="panel-body">${body}</div>
   </div>`;
