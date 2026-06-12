@@ -252,18 +252,16 @@
     tbody td { padding: 9px 3px; font-size: 13px; }
     .cell-ext { font-size: 13.5px; }
     .badge { padding: 2px 7px; font-size: 11.5px; }
-    .icon-btn { padding: 3px; }
-    .icon-btn svg { width: 16px; height: 16px; }
-    .cell-actions { white-space: nowrap; padding: 6px 2px; }
-    .cell-actions .icon-btn { padding: 2px; }
-    /* 모바일 표 컬럼폭: 내선/현장/IP/상태/관리 */
+    .icon-btn svg { width: 17px; height: 17px; }
+    /* 모바일 표 컬럼폭: 내선/현장/IP·비고/관리 */
     .m-col-ext { width: 17%; }
     .m-col-site { width: 33%; }
-    .m-col-ip { width: 19%; }
-    .m-col-st { width: 15%; }
-    .m-col-act { width: 16%; }
-    .m-col-ip + col {} /* noop */
+    .m-col-ip { width: 30%; }
+    .m-col-act { width: 20%; }
     tbody td:nth-child(3) { white-space: normal; word-break: break-all; }
+    /* 관리칸 아이콘 간격 벌리기 */
+    .cell-actions { white-space: nowrap; padding: 6px 2px; }
+    .cell-actions .icon-btn { padding: 3px; margin: 0 5px; }
   }
 </style>
 </head>
@@ -482,7 +480,7 @@ function renderWebTable(rows) {
   </div>`;
 }
 
-// 모바일: 5컬럼 표 (내선/현재현장/IP/상태/관리)
+// 모바일: 4컬럼 표 (내선/현재현장/IP·비고/관리)
 function renderMobilePanel(cls, title, rows) {
   const isHold = cls === 'm-hold';
   let body = '';
@@ -491,13 +489,12 @@ function renderMobilePanel(cls, title, rows) {
   } else {
     let trs = '';
     for (const r of rows) {
-      const st = statusOf(r);
-      const badge = st==='use' ? '<span class="badge use">사용중</span>' : '<span class="badge hold">보유중</span>';
+      // IP정보와 비고를 합쳐 표시 (둘 다 있으면 줄바꿈)
+      const ipNote = [esc(r.ip), esc(r.note)].filter(Boolean).join(' / ');
       trs += `<tr>
         <td class="cell-ext">${esc(r.ext)}</td>
         <td>${esc(curSite(r))}</td>
-        <td>${esc(r.ip)}</td>
-        <td>${badge}</td>
+        <td>${ipNote}</td>
         <td class="cell-actions">
           <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
           <button class="icon-btn del" onclick="deleteRow(${r.id})" title="삭제">${ICON_DEL}</button>
@@ -506,10 +503,10 @@ function renderMobilePanel(cls, title, rows) {
     }
     body = `<table>
       <colgroup>
-        <col class="m-col-ext"><col class="m-col-site"><col class="m-col-ip"><col class="m-col-st"><col class="m-col-act">
+        <col class="m-col-ext"><col class="m-col-site"><col class="m-col-ip"><col class="m-col-act">
       </colgroup>
       <thead><tr>
-        <th>내선번호</th><th>현재 사용 현장</th><th>IP 정보</th><th>상태</th><th>관리</th>
+        <th>내선번호</th><th>현재 사용 현장</th><th>IP정보/비고</th><th>관리</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
