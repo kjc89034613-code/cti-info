@@ -255,13 +255,13 @@
     .icon-btn svg { width: 17px; height: 17px; }
     /* 모바일 표 컬럼폭: 내선/현장/IP·비고/관리 */
     .m-col-ext { width: 17%; }
-    .m-col-site { width: 33%; }
-    .m-col-ip { width: 30%; }
-    .m-col-act { width: 20%; }
+    .m-col-site { width: 35%; }
+    .m-col-ip { width: 21%; }
+    .m-col-act { width: 27%; }
     tbody td:nth-child(3) { white-space: normal; word-break: break-all; }
-    /* 관리칸 아이콘 간격 벌리기 */
-    .cell-actions { white-space: nowrap; padding: 6px 2px; }
-    .cell-actions .icon-btn { padding: 3px; margin: 0 5px; }
+    /* 관리칸 아이콘 간격 벌리기 (잘림 방지) */
+    .cell-actions { white-space: nowrap; padding: 6px 2px; text-align: center; overflow: visible; text-overflow: clip; }
+    .cell-actions .icon-btn { padding: 3px; margin: 0 6px; }
   }
 </style>
 </head>
