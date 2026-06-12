@@ -6,268 +6,289 @@
 <title>CTI 전화기 현황 관리</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 <style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #ececef;
+    --border-strong: #d8d8dd;
+    --divider: #f2f2f4;
+    --text: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #a1a1aa;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'SF Mono', Menlo, Consolas, monospace;
+  }
   * { box-sizing: border-box; }
+  html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
   body {
-    font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
-    margin: 0; padding: 16px; background: #f4f6fa; color: #222;
+    font-family: var(--font-sans); margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text); font-size: 15px;
+    line-height: 1.5; letter-spacing: -0.01em;
   }
-  h1 { margin: 0 0 12px; font-size: 22px; color: #1f3a68; }
+
+  /* 페이지 헤더 (홈 아이콘 + 타이틀 + 그라데이션 라인) */
+  .page-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+  }
+  .home-icon {
+    width: 44px; height: 44px; border-radius: 11px;
+    background: linear-gradient(135deg, #18181b, #3f3f46);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .home-icon svg { width: 24px; height: 24px; stroke: #fff; }
+  .page-header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
+  .header-line {
+    height: 3px; border-radius: 2px; margin-bottom: 22px;
+    background: linear-gradient(90deg, #4f46e5, #6366f1 40%, #c2410c 100%);
+  }
+
+  /* 툴바 */
   .toolbar {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: #fff; padding: 12px; border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 12px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-bottom: 16px;
   }
-  .toolbar input, .toolbar select {
-    padding: 7px 10px; border: 1px solid #cdd4e0; border-radius: 6px; font-size: 14px;
+  .toolbar input[type="search"] {
+    flex: 0 1 360px; min-width: 180px; height: 50px; padding: 0 15px;
+    border: 1px solid var(--border-strong); border-radius: 9px; font-size: 15px;
+    font-family: inherit; background: var(--surface);
   }
-  .toolbar input[type="search"] { min-width: 220px; }
-  .toolbar button {
-    padding: 7px 14px; border: 0; border-radius: 6px; cursor: pointer;
-    font-size: 14px; font-weight: 600;
+  .toolbar input[type="search"]:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .toolbar .spacer { flex: 1 1 auto; }
+
+  /* 입체감 버튼 */
+  .btn3d {
+    border: 0; border-radius: 10px; height: 50px; align-self: center; padding: 0 22px; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit; color: #fff;
+    letter-spacing: -0.01em; transition: transform 0.08s, box-shadow 0.15s;
   }
-  .btn-primary { background: #2e6bd9; color: #fff; }
-  .btn-primary:hover { background: #1f56b8; }
-  .btn-success { background: #28a86b; color: #fff; }
-  .btn-success:hover { background: #1f8d57; }
-  .btn-warn { background: #e88c2e; color: #fff; }
-  .btn-warn:hover { background: #c97316; }
-  .btn-ghost { background: #eef1f7; color: #333; }
-  .btn-ghost:hover { background: #dde3ee; }
+  .btn3d:active { transform: translateY(2px); }
+  .btn-add {
+    background: linear-gradient(180deg, #6366f1, #4f46e5);
+    box-shadow: 0 4px 0 #3730a3, 0 6px 12px rgba(79,70,229,0.35);
+  }
+  .btn-add:active { box-shadow: 0 2px 0 #3730a3, 0 3px 8px rgba(79,70,229,0.3); }
+  .btn-excel {
+    background: linear-gradient(180deg, #16a34a, #15803d);
+    box-shadow: 0 4px 0 #14532d, 0 6px 12px rgba(21,128,61,0.35);
+  }
+  .btn-excel:active { box-shadow: 0 2px 0 #14532d, 0 3px 8px rgba(21,128,61,0.3); }
+
+  .t-spacer { flex: 1 1 auto; }
+  /* 통계 (툴바 안, 우측 배치) */
+  .stats { display: flex; gap: 10px; align-items: stretch; }
   .stat {
-    margin-left: auto; font-size: 13px; color: #555;
+    display: flex; align-items: center; gap: 9px; height: 50px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 10px; padding: 0 14px 0 18px; white-space: nowrap;
   }
-  .stat strong { color: #1f3a68; }
-  .table-wrap {
-    background: #fff; border-radius: 8px; overflow: auto;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06); max-height: calc(100vh - 200px);
+  .stat .label { font-size: 16px; color: var(--text-secondary); font-weight: 700; }
+  .stat .num {
+    font-size: 16px; font-weight: 800; color: #fff;
+    min-width: 34px; text-align: center; padding: 4px 11px; border-radius: 16px;
   }
-  table {
-    width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 1150px;
+  .stat.total .num { background: #3f3f46; }
+  .stat.use .num { background: var(--accent); }
+  .stat.hold .num { background: #c2410c; }
+
+  /* 모바일 탭 (웹에서는 숨김) */
+  .mtabs { display: none; gap: 2px; margin-bottom: 18px; background: #ececef; padding: 4px; border-radius: 11px; }
+  .mtabs button {
+    flex: 1; background: transparent; border: 0; padding: 12px; border-radius: 8px;
+    font-size: 15px; font-weight: 700; color: var(--text-secondary); cursor: pointer; font-family: inherit;
   }
+  .mtabs button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); }
+
+  /* 패널 */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,0.06); margin-bottom: 18px;
+  }
+  .panel-head {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    padding: 11px 18px 11px 22px; color: #fff; font-weight: 700; font-size: 15.5px;
+    background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%);
+  }
+  .panel-head::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: rgba(255,255,255,0.35);
+  }
+  .panel-head .count {
+    margin-left: auto; background: #fff; color: var(--accent); padding: 2px 14px;
+    border-radius: 20px; font-size: 14.5px; font-weight: 800; letter-spacing: 0.02em;
+  }
+  .panel.hold .panel-head { background: linear-gradient(135deg, #9a3412, #c2410c 50%, #ea580c); }
+  .panel.hold .panel-head .count { color: #c2410c; }
+
+  .panel-body { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed; }
   thead th {
-    position: sticky; top: 0; z-index: 1;
-    background: #1f3a68; color: #fff; padding: 10px 8px; text-align: center;
-    font-weight: 600; user-select: none; cursor: pointer; white-space: nowrap;
-    border: 1px solid #d8dde6;
+    background: #e6e8ee; color: var(--text-secondary); font-weight: 700;
+    padding: 12px 10px; text-align: center; white-space: nowrap;
+    border-bottom: 2px solid #9ca3b5; border-right: 1px solid #c5cad6;
+    font-size: 14.5px;
   }
-  thead th:hover { background: #2a4d8a; }
-  thead th.no-sort { cursor: default; }
-  thead th.no-sort:hover { background: #1f3a68; }
+  thead th:last-child { border-right: 0; }
   tbody td {
-    padding: 7px 8px; border: 1px solid #e6e9ef; vertical-align: middle;
-    text-align: center;
+    padding: 12px 10px; border-bottom: 1px solid #cbd0db;
+    border-right: 1px solid #d5d9e2; color: #1a1a1f; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
   }
-  tbody tr:hover { background: #f7faff; }
-  tbody tr.editing { background: #fff8e1 !important; }
-  /* 열 그룹 색상 */
-  tbody td.col-existing { background: #eaf2fb; }   /* 기존 사용 현장 + 반납일: 하늘색 계열 */
-  tbody td.col-sending  { background: #eaf7ee; }   /* 발송 현장 + 발송일: 연두색 계열 */
-  tbody tr:hover td.col-existing { background: #dde9f7; }
-  tbody tr:hover td.col-sending  { background: #d8efdf; }
-  tbody tr.editing td.col-existing,
-  tbody tr.editing td.col-sending { background: #fff8e1; }
-  /* 헤더에도 같은 색 살짝 적용 */
-  thead th.col-existing { background: #2e5a96; }
-  thead th.col-sending  { background: #2f7d4b; }
-  thead th.col-existing:hover { background: #3a6db0; }
-  thead th.col-sending:hover  { background: #399159; }
-  td input, td select {
-    width: 100%; padding: 5px 6px; border: 1px solid #c9d2e0;
-    border-radius: 4px; font-size: 13px; font-family: inherit;
+  tbody td:last-child { border-right: 0; }
+  tbody tr:hover { background: #fafbff; }
+  tbody td input {
+    width: 100%; padding: 7px 9px; border: 1px solid var(--border-strong);
+    border-radius: 6px; font-size: 14px; font-family: inherit; text-align: center;
   }
-  td.cell-ext { font-weight: 700; color: #1f3a68; }
-  td.cell-actions { white-space: nowrap; }
-  td.cell-actions button {
-    padding: 4px 9px; margin: 0 2px; border: 0; border-radius: 4px;
-    cursor: pointer; font-size: 12px; font-weight: 600;
+  .cell-ext { font-weight: 700; }
+
+  /* 현장 3개 열 색상 구분 */
+  .col-from { background: #eff6ff; }   /* 기존 사용 현장 - 연파랑 */
+  .col-send { background: #fef3f2; }   /* 발송 현장 - 연빨강 */
+  .col-cur  { background: #f0fdf4; }   /* 현재 사용 현장 - 연초록 */
+  thead th.col-from { background: #dbeafe; }
+  thead th.col-send { background: #fde2e1; }
+  thead th.col-cur  { background: #dcfce7; }
+  tbody tr:hover td.col-from { background: #e0efff; }
+  tbody tr:hover td.col-send { background: #fdeae9; }
+  tbody tr:hover td.col-cur  { background: #e6fbec; }
+
+  /* 컬럼 폭: 좁은 그룹(내선/반납/발송일/상태/관리) vs 넓은 그룹(현장명들/IP) */
+  col.c-narrow { width: 9%; }
+  col.c-wide { width: 14.5%; }
+
+  /* 상태 뱃지 */
+  .badge { display: inline-block; padding: 4px 13px; border-radius: 20px; font-size: 13.5px; font-weight: 700; }
+  .badge.use { background: var(--accent-soft); color: var(--accent); }
+  .badge.hold { background: #fff7ed; color: #c2410c; }
+
+  /* 관리 아이콘 버튼 (예전 형태: 아이콘) */
+  .cell-actions { white-space: nowrap; }
+  .icon-btn {
+    background: transparent; border: 0; padding: 6px; cursor: pointer; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
   }
-  td.cell-actions .icon-btn {
-    background: transparent; border: 0; cursor: pointer; padding: 4px;
-    margin: 0 3px; border-radius: 4px; transition: background 0.15s;
-    display: inline-flex; align-items: center; justify-content: center;
-    vertical-align: middle;
-  }
-  td.cell-actions .icon-btn:hover { background: #e6ebf5; }
-  td.cell-actions .icon-btn.icon-edit { color: #2e6bd9; }
-  td.cell-actions .icon-btn.icon-edit:hover { background: #e0ecff; }
-  td.cell-actions .icon-btn.icon-delete { color: #d64545; }
-  td.cell-actions .icon-btn.icon-delete:hover { background: #ffe5e5; }
-  td.cell-actions .icon-btn svg { width: 18px; height: 18px; }
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 10px;
-    font-size: 11.5px; font-weight: 600;
-  }
-  .badge-return { background: #fde2e2; color: #b3261e; }
-  .badge-sent { background: #d6eedd; color: #1d6e3d; }
-  .empty {
-    text-align: center; padding: 40px; color: #888;
-  }
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-    display: none; align-items: center; justify-content: center; z-index: 100;
-  }
+  .icon-btn svg { width: 19px; height: 19px; }
+  .icon-btn.edit { color: var(--accent); }
+  .icon-btn.edit:hover { background: var(--accent-soft); }
+  .icon-btn.del { color: var(--danger); }
+  .icon-btn.del:hover { background: #fee2e2; }
+  .icon-btn.save { color: var(--success); font-size: 14px; font-weight: 700; padding: 6px 10px; }
+  .icon-btn.cancel { color: var(--text-muted); font-size: 14px; font-weight: 700; padding: 6px 10px; }
+
+  .empty { padding: 36px; text-align: center; color: var(--text-muted); font-size: 15px; }
+
+  /* 데스크톱: 모바일 전용 패널 숨김 (웹은 통합 테이블만) */
+  .panel.m-use, .panel.m-hold { display: none; }
+
+  /* 모달 */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
   .modal-bg.active { display: flex; }
-  .modal {
-    background: #fff; border-radius: 10px; padding: 22px; width: 90%; max-width: 480px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  }
-  .modal h2 { margin: 0 0 16px; color: #1f3a68; font-size: 18px; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #444; }
-  .field input { width: 100%; padding: 8px 10px; border: 1px solid #cdd4e0; border-radius: 6px; font-size: 14px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: #333; color: #fff; padding: 10px 18px; border-radius: 6px;
-    font-size: 13px; opacity: 0; transition: opacity 0.3s; z-index: 200;
-    pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-  @media (max-width: 760px) {
-    body { padding: 10px; }
-    h1 { font-size: 18px; }
-    .toolbar {
-      gap: 6px; padding: 10px;
-    }
-    .toolbar input[type="search"] { flex: 1 1 100%; min-width: 0; }
-    .toolbar button { flex: 1 1 auto; }
-    .stat {
-      flex: 1 1 100%; margin-left: 0; text-align: center;
-      padding-top: 6px; border-top: 1px solid #eef0f5;
-    }
-    .table-wrap {
-      background: transparent; box-shadow: none; max-height: none;
-      overflow: visible; border-radius: 0;
-    }
-    /* 표를 카드처럼 표시 */
-    table { min-width: 0; width: 100%; }
-    table colgroup { display: none; }
-    thead { display: none; }              /* 헤더 숨김 */
-    tbody, tr, td { display: block; width: 100%; }
-    tbody tr {
-      background: #fff; border-radius: 10px; margin-bottom: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 6px 4px;
-      border: 1px solid #e6e9ef;
-    }
-    tbody tr:hover { background: #fff; }
+  .modal { background: var(--surface); border-radius: 16px; padding: 24px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { margin: 0 0 18px; font-size: 19px; font-weight: 800; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 13.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; font-size: 15px; font-family: inherit; }
+  .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel { background: #f1f5f9; color: var(--text); border: 0; border-radius: 9px; padding: 11px 20px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+  /* 토스트 */
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px); background: #18181b; color: #fff; padding: 13px 24px; border-radius: 11px; font-size: 15px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 200; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== 모바일 ===== */
+  @media (max-width: 860px) {
+    body { padding: 13px; }
+    .mtabs { display: flex; }
+    .toolbar .btn3d { flex: 1 1 auto; }
+    .stats { width: 100%; justify-content: space-between; }
+    .stat { flex: 1 1 auto; justify-content: center; padding: 9px 8px; gap: 5px; }
+    .stat .label { font-size: 13px; }
+    .stat .num { font-size: 14px; }
+    /* 모바일 카드뷰: 가운데정렬 해제, 라벨 좌 / 값 우 */
+    tbody td { text-align: right !important; }
+    tbody td.cell-ext { text-align: right !important; }
+    /* 모바일에선 현장 색상 배경 해제 (카드라 불필요) */
+    tbody td.col-from, tbody td.col-send, tbody td.col-cur { background: transparent; }
+    /* 모바일: 웹 통합 패널 숨기고, 선택된 모바일 탭 패널만 표시 */
+    .panel.web-only { display: none; }
+    .panel.m-use, .panel.m-hold { display: none; }
+    .panel.m-use.active, .panel.m-hold.active { display: block; }
+
+    /* 카드형 */
+    .panel-body { overflow-x: visible; }
+    table, thead, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+    tbody tr { border-bottom: 9px solid #f1f5f9; }
+    tbody tr:last-child { border-bottom: 0; }
     tbody td {
-      display: flex; justify-content: space-between; align-items: center;
-      text-align: right; border: 0; border-bottom: 1px dashed #eef0f5;
-      padding: 9px 12px; gap: 10px; min-height: 40px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px dashed var(--divider);
+      white-space: normal; text-align: right; overflow: visible; font-size: 15.5px;
     }
-    tbody td:last-child { border-bottom: 0; }
-    /* 각 셀 앞에 라벨 표시 */
     tbody td::before {
-      content: attr(data-label);
-      font-weight: 700; color: #5a6478; font-size: 12.5px;
-      text-align: left; flex: 0 0 auto; white-space: nowrap;
+      content: attr(data-label); font-weight: 700; color: var(--text-muted);
+      font-size: 14px; text-align: left; flex: 0 0 auto;
     }
-    /* 카드에서는 색상 배경 대신 왼쪽 컬러 바로 그룹 구분 */
-    tbody td.col-existing { background: transparent; border-left: 3px solid #2e6bd9; }
-    tbody td.col-sending  { background: transparent; border-left: 3px solid #28a86b; }
-    tbody tr:hover td.col-existing { background: transparent; }
-    tbody tr:hover td.col-sending  { background: transparent; }
-    /* 내선번호를 카드 제목처럼 강조 */
-    tbody td.cell-ext {
-      font-size: 16px; background: #f4f7fc; border-radius: 6px;
-      margin-bottom: 2px; border-bottom: 1px solid #e6e9ef;
-    }
-    tbody td.cell-ext::before { color: #1f3a68; }
-    /* 편집/신규 입력칸이 라벨과 나란히 */
-    tbody td input, tbody td select { width: auto; flex: 1 1 60%; max-width: 62%; }
+    tbody td.cell-ext { font-size: 18px; background: #f8fafc; }
+    tbody td input { flex: 1 1 58%; max-width: 60%; }
     tbody td.cell-actions { justify-content: flex-end; }
     tbody td.cell-actions::before { content: ""; }
-    tbody td.cell-actions button { font-size: 13px; padding: 6px 12px; }
-    tbody td.cell-actions .icon-btn svg { width: 22px; height: 22px; }
-    .empty { background: #fff; border-radius: 10px; }
   }
 </style>
 </head>
 <body>
 
-<h1>📞 CTI 전화기 현황 관리</h1>
+<div class="page-header">
+  <div class="home-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+    </svg>
+  </div>
+  <h1>CTI 전화기 현황 관리</h1>
+</div>
+<div class="header-line"></div>
 
 <div class="toolbar">
-  <input type="search" id="searchBox" placeholder="🔍 통합 검색 (현장명·내선·IP·발송지·비고)" />
-  <button class="btn-success" onclick="openAddModal()">+ 신규 등록</button>
-  <button class="btn-warn" onclick="exportExcel()">📥 엑셀 다운로드</button>
-  <span class="stat">
-    표시: <strong id="visCount">0</strong> / 전체: <strong id="totCount">0</strong>건
-    &nbsp;|&nbsp; 반납: <strong id="retCount">0</strong> &nbsp; 발송: <strong id="sentCount">0</strong>
-  </span>
+  <input type="search" id="searchBox" placeholder="🔍 통합검색 (내선번호·현장명·IP)" oninput="render()">
+  <span class="t-spacer"></span>
+  <div class="stats">
+    <div class="stat total"><span class="label">전체 수량</span><span class="num" id="statTotal">0</span></div>
+    <div class="stat use"><span class="label">사용 수량</span><span class="num" id="statUse">0</span></div>
+    <div class="stat hold"><span class="label">보유 수량</span><span class="num" id="statHold">0</span></div>
+  </div>
+  <button class="btn3d btn-add" onclick="openAddModal()">신규등록</button>
+  <button class="btn3d btn-excel" onclick="exportExcel()">엑셀 다운로드</button>
 </div>
 
-<div class="table-wrap">
-  <table id="dataTable">
-    <colgroup>
-      <col style="width: 90px;">
-      <col style="width: 15%;">
-      <col style="width: 130px;">
-      <col style="width: 100px;">
-      <col style="width: 15%;">
-      <col style="width: 130px;">
-      <col style="width: 100px;">
-      <col style="width: 14%;">
-      <col style="width: 95px;">
-    </colgroup>
-    <thead>
-      <tr>
-        <th data-sort="ext">내선번호</th>
-        <th data-sort="site" class="col-existing">기존 사용 현장</th>
-        <th data-sort="ip" class="col-existing">IP 정보</th>
-        <th data-sort="returnDate" class="col-existing">반납일</th>
-        <th data-sort="sendSite" class="col-sending">발송 현장</th>
-        <th data-sort="sendIp" class="col-sending">IP 정보</th>
-        <th data-sort="sendDate" class="col-sending">발송일</th>
-        <th data-sort="note">비고</th>
-        <th class="no-sort">관리</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
-  <div id="emptyMsg" class="empty" style="display:none;">조회 결과가 없습니다.</div>
+<!-- 모바일 탭 -->
+<div class="mtabs">
+  <button class="m-tab-use active" onclick="switchMTab('use', this)">사용중</button>
+  <button class="m-tab-hold" onclick="switchMTab('hold', this)">보유중</button>
 </div>
+
+<div class="panels" id="panels"></div>
 
 <!-- 신규 등록 모달 -->
 <div class="modal-bg" id="addModal">
   <div class="modal">
-    <h2>📝 신규 전화기 등록</h2>
-    <div class="field">
-      <label>내선번호 *</label>
-      <input type="text" id="newExt" placeholder="예: 3001">
-    </div>
-    <div class="field">
-      <label>기존 사용 현장</label>
-      <input type="text" id="newSite" placeholder="예: 아크로 삼성">
-    </div>
-    <div class="field">
-      <label>IP 정보 (기존 현장)</label>
-      <input type="text" id="newIp" placeholder="예: 192.168.10.21">
-    </div>
-    <div class="field">
-      <label>반납일</label>
-      <input type="date" id="newReturnDate">
-    </div>
-    <div class="field">
-      <label>발송 현장</label>
-      <input type="text" id="newSendSite">
-    </div>
-    <div class="field">
-      <label>IP 정보 (발송 현장)</label>
-      <input type="text" id="newSendIp" placeholder="예: 192.168.20.35">
-    </div>
-    <div class="field">
-      <label>발송일</label>
-      <input type="date" id="newSendDate">
-    </div>
-    <div class="field">
-      <label>비고</label>
-      <input type="text" id="newNote">
-    </div>
+    <h2>신규 CTI 등록</h2>
+    <div class="field"><label>내선번호 *</label><input id="newExt" placeholder="예: 3001"></div>
+    <div class="field"><label>기존 사용 현장</label><input id="newSite" placeholder="예: 아크로 삼성"></div>
+    <div class="field"><label>반납일</label><input type="date" id="newReturnDate"></div>
+    <div class="field"><label>발송 현장</label><input id="newSendSite"></div>
+    <div class="field"><label>발송일</label><input type="date" id="newSendDate"></div>
+    <div class="field"><label>IP 정보</label><input id="newIp" placeholder="예: 10.174.3"></div>
+    <div class="field"><label>비고</label><input id="newNote"></div>
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeAddModal()">취소</button>
-      <button class="btn-success" onclick="confirmAdd()">등록</button>
+      <button class="btn-cancel" onclick="closeAddModal()">취소</button>
+      <button class="btn3d btn-add" onclick="confirmAdd()">등록</button>
     </div>
   </div>
 </div>
@@ -275,221 +296,239 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== Supabase 클라우드 연결 =====
+// ===== Supabase 연결 =====
 const SUPABASE_URL = 'https://pptrrnupppqcjnjxqafd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_McD4q2AbK1Rbq3Rmt2DbOA_JMBs7bnZ';
 const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let data = [];
 let editingId = null;
-let sortKey = 'ext';
-let sortAsc = true;
+let mTab = 'use';
 
-// DB row(snake_case) -> 화면 객체(camelCase)
 function fromDb(r) {
   return {
-    id: r.id,
-    site: r.site || '',
-    ext: r.ext || '',
-    ip: r.ip || '',
-    returnDate: r.return_date || '',
-    sendSite: r.send_site || '',
-    sendIp: r.send_ip || '',
-    sendDate: r.send_date || '',
-    note: r.note || '',
+    id: r.id, site: r.site||'', ext: r.ext||'', ip: r.ip||'',
+    returnDate: r.return_date||'', sendSite: r.send_site||'',
+    sendIp: r.send_ip||'', sendDate: r.send_date||'', note: r.note||'',
   };
 }
-
-// 화면 객체 -> DB row
 function toDb(r) {
   return {
-    site: r.site || '',
-    ext: r.ext || '',
-    ip: r.ip || '',
-    return_date: r.returnDate || null,
-    send_site: r.sendSite || '',
-    send_ip: r.sendIp || '',
-    send_date: r.sendDate || null,
-    note: r.note || '',
+    site: r.site||'', ext: r.ext||'', ip: r.ip||'',
+    return_date: r.returnDate||null, send_site: r.sendSite||'',
+    send_ip: r.sendIp||'', send_date: r.sendDate||null, note: r.note||'',
     updated_at: new Date().toISOString(),
   };
 }
 
-async function loadData() {
-  try {
-    const { data: rows, error } = await supa
-      .from('cti_phones').select('*').order('ext', { ascending: true });
-    if (error) throw error;
-    data = (rows || []).map(fromDb);
-  } catch (e) {
-    console.error(e);
-    toast('⚠ 데이터 불러오기 실패: ' + (e.message || e));
-    data = [];
-  }
+// ===== 상태 판정: 반납일 있고 발송일 없으면 보유중, 그 외 사용중 =====
+function statusOf(r) {
+  const ret = (r.returnDate||'').trim();
+  const sd = (r.sendDate||'').trim();
+  if (ret && !sd) return 'hold';
+  return 'use';
+}
+// 현재 사용 현장 = 발송현장 있으면 발송현장, 없으면 기존현장
+function curSite(r) {
+  return (r.sendSite && r.sendSite.trim()) ? r.sendSite : r.site;
 }
 
-function saveData() {
-  // Supabase 연결 버전에서는 각 작업(저장/삭제/등록)이 DB에 직접 반영됩니다.
+async function loadData() {
+  try {
+    const { data: rows, error } = await supa.from('cti_phones').select('*').order('ext', {ascending:true});
+    if (error) throw error;
+    data = (rows||[]).map(fromDb);
+  } catch (e) { console.error(e); toast('⚠ 불러오기 실패: '+(e.message||e)); data=[]; }
 }
 
 function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1900);
+}
+function esc(s) {
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function getStatus(r) {
-  if (r.sendSite || r.sendDate) return 'sent';
-  if (r.returnDate) return 'returned';
-  return 'onsite';
-}
+const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const ICON_DEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
 
 function getFiltered() {
   const q = document.getElementById('searchBox').value.trim().toLowerCase();
-  let rows = data.filter(r => {
-    if (!q) return true;
-    return (
-      (r.site || '').toLowerCase().includes(q) ||
-      (r.ext || '').toLowerCase().includes(q) ||
-      (r.ip || '').toLowerCase().includes(q) ||
-      (r.sendSite || '').toLowerCase().includes(q) ||
-      (r.sendIp || '').toLowerCase().includes(q) ||
-      (r.note || '').toLowerCase().includes(q) ||
-      (r.returnDate || '').includes(q) ||
-      (r.sendDate || '').includes(q)
+  let rows = data;
+  if (q) {
+    rows = rows.filter(r =>
+      (r.ext||'').toLowerCase().includes(q) ||
+      (r.site||'').toLowerCase().includes(q) ||
+      (r.sendSite||'').toLowerCase().includes(q) ||
+      (r.ip||'').toLowerCase().includes(q) ||
+      (r.note||'').toLowerCase().includes(q)
     );
-  });
-  rows.sort((a, b) => {
-    let va = a[sortKey] || '';
-    let vb = b[sortKey] || '';
-    if (sortKey === 'ext') {
-      const na = parseInt(va, 10), nb = parseInt(vb, 10);
-      if (!isNaN(na) && !isNaN(nb)) { va = na; vb = nb; }
-    }
-    if (va < vb) return sortAsc ? -1 : 1;
-    if (va > vb) return sortAsc ? 1 : -1;
-    return 0;
-  });
-  return rows;
+  }
+  return [...rows].sort((a,b)=>(parseInt(a.ext)||0)-(parseInt(b.ext)||0));
 }
 
+function switchMTab(tab, btn) {
+  mTab = tab;
+  document.querySelectorAll('.mtabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyMTab();
+}
+function applyMTab() {
+  document.querySelectorAll('.panel.m-use, .panel.m-hold').forEach(p=>p.classList.remove('active'));
+  const t = document.querySelector('.panel.m-'+mTab);
+  if (t) t.classList.add('active');
+}
+
+// ===== 렌더 =====
 function render() {
   const rows = getFiltered();
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  document.getElementById('emptyMsg').style.display = rows.length ? 'none' : 'block';
-  document.getElementById('visCount').textContent = rows.length;
-  document.getElementById('totCount').textContent = data.length;
-  document.getElementById('retCount').textContent = data.filter(r => getStatus(r)==='returned').length;
-  document.getElementById('sentCount').textContent = data.filter(r => getStatus(r)==='sent').length;
+  const useCnt = data.filter(r=>statusOf(r)==='use').length;
+  const holdCnt = data.filter(r=>statusOf(r)==='hold').length;
+  document.getElementById('statTotal').textContent = data.length;
+  document.getElementById('statUse').textContent = useCnt;
+  document.getElementById('statHold').textContent = holdCnt;
 
-  for (const r of rows) {
-    const tr = document.createElement('tr');
+  const useRows = rows.filter(r=>statusOf(r)==='use');
+  const holdRows = rows.filter(r=>statusOf(r)==='hold');
 
-    if (r.id === editingId) {
-      tr.classList.add('editing');
-      tr.innerHTML = `
-        <td class="cell-ext" data-label="내선번호"><input value="${escapeHtml(r.ext)}" data-f="ext"></td>
-        <td class="col-existing" data-label="기존 현장"><input value="${escapeHtml(r.site)}" data-f="site"></td>
-        <td class="col-existing" data-label="IP(기존)"><input value="${escapeHtml(r.ip)}" data-f="ip" placeholder="IP"></td>
-        <td class="col-existing" data-label="반납일"><input type="date" value="${escapeHtml(r.returnDate)}" data-f="returnDate"></td>
-        <td class="col-sending" data-label="발송 현장"><input value="${escapeHtml(r.sendSite)}" data-f="sendSite"></td>
-        <td class="col-sending" data-label="IP(발송)"><input value="${escapeHtml(r.sendIp)}" data-f="sendIp" placeholder="IP"></td>
-        <td class="col-sending" data-label="발송일"><input type="date" value="${escapeHtml(r.sendDate)}" data-f="sendDate"></td>
-        <td data-label="비고"><input value="${escapeHtml(r.note)}" data-f="note"></td>
-        <td class="cell-actions">
-          <button class="btn-success" onclick="saveRow(${r.id})">저장</button>
-          <button class="btn-ghost" onclick="cancelEdit()">취소</button>
-        </td>`;
-    } else {
-      tr.innerHTML = `
-        <td class="cell-ext" data-label="내선번호">${escapeHtml(r.ext)}</td>
-        <td class="col-existing" data-label="기존 현장">${escapeHtml(r.site)}</td>
-        <td class="col-existing" data-label="IP(기존)">${escapeHtml(r.ip)}</td>
-        <td class="col-existing" data-label="반납일">${escapeHtml(r.returnDate)}</td>
-        <td class="col-sending" data-label="발송 현장">${escapeHtml(r.sendSite)}</td>
-        <td class="col-sending" data-label="IP(발송)">${escapeHtml(r.sendIp)}</td>
-        <td class="col-sending" data-label="발송일">${escapeHtml(r.sendDate)}</td>
-        <td data-label="비고">${escapeHtml(r.note)}</td>
-        <td class="cell-actions">
-          <button class="icon-btn icon-edit" onclick="startEdit(${r.id})" title="수정">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="icon-btn icon-delete" onclick="deleteRow(${r.id})" title="삭제">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
-          </button>
-        </td>`;
+  const panels = document.getElementById('panels');
+  panels.innerHTML =
+    renderWebTable(rows) +
+    renderMobilePanel('m-use', '사용중 CTI 내선', useRows) +
+    renderMobilePanel('m-hold', '보유중 CTI 내선', holdRows);
+
+  applyMTab();
+}
+
+// 웹: 단일 통합 테이블 (9컬럼)
+function renderWebTable(rows) {
+  let body = '';
+  if (rows.length === 0) {
+    body = `<div class="empty">조회 결과가 없습니다.</div>`;
+  } else {
+    let trs = '';
+    for (const r of rows) {
+      const st = statusOf(r);
+      const badge = st==='use' ? '<span class="badge use">사용중</span>' : '<span class="badge hold">보유중</span>';
+      if (editingId === r.id) {
+        trs += `<tr class="editing">
+          <td class="cell-ext" data-label="내선번호"><input value="${esc(r.ext)}" data-f="ext"></td>
+          <td class="col-from" data-label="기존 사용 현장"><input value="${esc(r.site)}" data-f="site"></td>
+          <td data-label="반납일"><input type="date" value="${esc(r.returnDate)}" data-f="returnDate"></td>
+          <td class="col-send" data-label="발송 현장"><input value="${esc(r.sendSite)}" data-f="sendSite"></td>
+          <td data-label="발송일"><input type="date" value="${esc(r.sendDate)}" data-f="sendDate"></td>
+          <td class="col-cur" data-label="현재 사용 현장">${esc(curSite(r))}</td>
+          <td data-label="IP 정보"><input value="${esc(r.ip)}" data-f="ip" placeholder="IP"></td>
+          <td data-label="상태">${badge}</td>
+          <td class="cell-actions">
+            <button class="icon-btn save" onclick="saveRow(${r.id})">저장</button>
+            <button class="icon-btn cancel" onclick="cancelEdit()">취소</button>
+          </td>
+        </tr>`;
+      } else {
+        trs += `<tr>
+          <td class="cell-ext" data-label="내선번호">${esc(r.ext)}</td>
+          <td class="col-from" data-label="기존 사용 현장">${esc(r.site)}</td>
+          <td data-label="반납일">${esc(r.returnDate)}</td>
+          <td class="col-send" data-label="발송 현장">${esc(r.sendSite)}</td>
+          <td data-label="발송일">${esc(r.sendDate)}</td>
+          <td class="col-cur" data-label="현재 사용 현장">${esc(curSite(r))}</td>
+          <td data-label="IP 정보">${esc(r.ip)}</td>
+          <td data-label="상태">${badge}</td>
+          <td class="cell-actions">
+            <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
+            <button class="icon-btn del" onclick="deleteRow(${r.id})" title="삭제">${ICON_DEL}</button>
+          </td>
+        </tr>`;
+      }
     }
-    tbody.appendChild(tr);
+    body = `<table>
+      <colgroup>
+        <col class="c-narrow"><col class="c-wide"><col class="c-narrow"><col class="c-wide">
+        <col class="c-narrow"><col class="c-wide"><col class="c-wide"><col class="c-narrow"><col class="c-narrow">
+      </colgroup>
+      <thead><tr>
+        <th>내선번호</th><th class="col-from">기존 사용 현장</th><th>반납일</th><th class="col-send">발송 현장</th>
+        <th>발송일</th><th class="col-cur">현재 사용 현장</th><th>IP 정보</th><th>상태</th><th>관리</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
   }
+  return `<div class="panel web-only">
+    <div class="panel-head">전체 CTI 현황<span class="count">${rows.length}</span></div>
+    <div class="panel-body">${body}</div>
+  </div>`;
 }
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 모바일: 5컬럼 (내선/현재현장/IP/상태/관리)
+function renderMobilePanel(cls, title, rows) {
+  const isHold = cls === 'm-hold';
+  let body = '';
+  if (rows.length === 0) {
+    body = `<div class="empty">해당 항목이 없습니다.</div>`;
+  } else {
+    let trs = '';
+    for (const r of rows) {
+      const st = statusOf(r);
+      const badge = st==='use' ? '<span class="badge use">사용중</span>' : '<span class="badge hold">보유중</span>';
+      trs += `<tr>
+        <td class="cell-ext" data-label="내선번호">${esc(r.ext)}</td>
+        <td data-label="현재 사용 현장">${esc(curSite(r))}</td>
+        <td data-label="IP 정보">${esc(r.ip)}</td>
+        <td data-label="상태">${badge}</td>
+        <td class="cell-actions">
+          <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
+          <button class="icon-btn del" onclick="deleteRow(${r.id})" title="삭제">${ICON_DEL}</button>
+        </td>
+      </tr>`;
+    }
+    body = `<table><tbody>${trs}</tbody></table>`;
+  }
+  return `<div class="panel ${cls} ${isHold?'hold':''}">
+    <div class="panel-head">${title}<span class="count">${rows.length}</span></div>
+    <div class="panel-body">${body}</div>
+  </div>`;
 }
 
-function startEdit(id) {
-  editingId = id;
-  render();
-}
-
-function cancelEdit() {
-  editingId = null;
-  render();
-}
+// ===== 수정/저장/삭제 =====
+function startEdit(id) { editingId = id; render(); }
+function cancelEdit() { editingId = null; render(); }
 
 async function saveRow(id) {
   const tr = document.querySelector('tr.editing');
   if (!tr) return;
   const updates = {};
-  tr.querySelectorAll('[data-f]').forEach(el => {
-    updates[el.dataset.f] = el.value.trim();
-  });
-  const idx = data.findIndex(r => r.id === id);
-  if (idx < 0) return;
-  const merged = { ...data[idx], ...updates };
+  tr.querySelectorAll('[data-f]').forEach(el => updates[el.dataset.f] = el.value.trim());
+  const idx = data.findIndex(r=>r.id===id);
+  if (idx<0) return;
+  const merged = {...data[idx], ...updates};
   try {
     const { error } = await supa.from('cti_phones').update(toDb(merged)).eq('id', id);
     if (error) throw error;
-    data[idx] = merged;
-    editingId = null;
-    render();
-    toast('저장되었습니다');
-  } catch (e) {
-    console.error(e);
-    toast('⚠ 저장 실패: ' + (e.message || e));
-  }
+    data[idx] = merged; editingId = null; render(); toast('저장되었습니다');
+  } catch (e) { console.error(e); toast('⚠ 저장 실패: '+(e.message||e)); }
 }
 
 async function deleteRow(id) {
-  const r = data.find(x => x.id === id);
+  const r = data.find(x=>x.id===id);
   if (!r) return;
   if (!confirm(`내선 ${r.ext} (${r.site}) 항목을 삭제하시겠습니까?`)) return;
   try {
     const { error } = await supa.from('cti_phones').delete().eq('id', id);
     if (error) throw error;
-    data = data.filter(x => x.id !== id);
-    render();
-    toast('삭제되었습니다');
-  } catch (e) {
-    console.error(e);
-    toast('⚠ 삭제 실패: ' + (e.message || e));
-  }
+    data = data.filter(x=>x.id!==id); render(); toast('삭제되었습니다');
+  } catch (e) { console.error(e); toast('⚠ 삭제 실패: '+(e.message||e)); }
 }
 
+// ===== 신규 등록 =====
 function openAddModal() {
-  ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendIp','newSendDate','newNote'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendDate','newNote']
+    .forEach(id=>document.getElementById(id).value='');
   document.getElementById('addModal').classList.add('active');
-  setTimeout(() => document.getElementById('newExt').focus(), 50);
+  setTimeout(()=>document.getElementById('newExt').focus(), 50);
 }
-
-function closeAddModal() {
-  document.getElementById('addModal').classList.remove('active');
-}
+function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
 
 async function confirmAdd() {
   const ext = document.getElementById('newExt').value.trim();
@@ -500,102 +539,36 @@ async function confirmAdd() {
     ip: document.getElementById('newIp').value.trim(),
     returnDate: document.getElementById('newReturnDate').value,
     sendSite: document.getElementById('newSendSite').value.trim(),
-    sendIp: document.getElementById('newSendIp').value.trim(),
+    sendIp: '',
     sendDate: document.getElementById('newSendDate').value,
     note: document.getElementById('newNote').value.trim(),
   };
   try {
-    const { data: inserted, error } = await supa
-      .from('cti_phones').insert(toDb(newRow)).select().single();
+    const { data: ins, error } = await supa.from('cti_phones').insert(toDb(newRow)).select().single();
     if (error) throw error;
-    data.push(fromDb(inserted));
-    closeAddModal();
-    render();
-    toast('등록되었습니다');
-  } catch (e) {
-    console.error(e);
-    toast('⚠ 등록 실패: ' + (e.message || e));
-  }
+    data.push(fromDb(ins)); closeAddModal(); render(); toast('등록되었습니다');
+  } catch (e) { console.error(e); toast('⚠ 등록 실패: '+(e.message||e)); }
 }
 
+// ===== 엑셀 다운로드 =====
 function exportExcel() {
   const rows = getFiltered();
-  const headers = ['기존 사용 현장','내선번호','IP 정보','반납일','발송 현장','IP 정보','발송일','비 고'];
+  const headers = ['내선번호','기존 사용 현장','반납일','발송 현장','발송일','현재 사용 현장','IP 정보','상태','비고'];
   const aoa = [headers];
   for (const r of rows) {
-    aoa.push([r.site, r.ext, r.ip, r.returnDate, r.sendSite, r.sendIp, r.sendDate, r.note]);
+    const st = statusOf(r)==='use' ? '사용중' : '보유중';
+    aoa.push([r.ext, r.site, r.returnDate, r.sendSite, r.sendDate, curSite(r), r.ip, st, r.note]);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:20},{wch:10},{wch:16},{wch:13},{wch:18},{wch:16},{wch:13},{wch:20}];
-
-  const thinBorder = {
-    top:    { style: 'thin', color: { rgb: '000000' } },
-    bottom: { style: 'thin', color: { rgb: '000000' } },
-    left:   { style: 'thin', color: { rgb: '000000' } },
-    right:  { style: 'thin', color: { rgb: '000000' } }
-  };
-  const baseFont = { name: '맑은 고딕', sz: 10 };
-  const center = { horizontal: 'center', vertical: 'center', wrapText: true };
-
-  const headerStyle = {
-    font: { ...baseFont, bold: true, color: { rgb: '000000' } },
-    alignment: center,
-    border: thinBorder,
-    fill: { patternType: 'solid', fgColor: { rgb: 'D9D9D9' } }
-  };
-  const bodyStyle = {
-    font: baseFont,
-    alignment: center,
-    border: thinBorder
-  };
-
-  const totalRows = aoa.length;
-  const totalCols = headers.length;
-  for (let R = 0; R < totalRows; R++) {
-    for (let C = 0; C < totalCols; C++) {
-      const ref = XLSX.utils.encode_cell({ r: R, c: C });
-      if (!ws[ref]) {
-        ws[ref] = { t: 's', v: '' };
-      }
-      ws[ref].s = (R === 0) ? headerStyle : bodyStyle;
-    }
-  }
-
-  ws['!rows'] = [{ hpt: 22 }];
-
+  ws['!cols'] = [{wch:10},{wch:18},{wch:13},{wch:18},{wch:13},{wch:18},{wch:14},{wch:9},{wch:16}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'CTI현황');
-  const today = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, `CTI_전화기_현황_${today}.xlsx`);
-  toast('엑셀 파일이 다운로드되었습니다');
+  XLSX.writeFile(wb, `CTI_전화기_현황_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('엑셀 파일을 다운로드했습니다');
 }
 
-document.getElementById('searchBox').addEventListener('input', render);
-
-document.querySelectorAll('th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const k = th.dataset.sort;
-    if (sortKey === k) sortAsc = !sortAsc;
-    else { sortKey = k; sortAsc = true; }
-    render();
-  });
-});
-
-document.getElementById('addModal').addEventListener('click', (e) => {
-  if (e.target.id === 'addModal') closeAddModal();
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('addModal').classList.contains('active')) closeAddModal();
-    else if (editingId !== null) cancelEdit();
-  }
-});
-
-(async () => {
-  await loadData();
-  render();
-})();
+// ===== 초기 =====
+(async () => { await loadData(); render(); })();
 </script>
 </body>
 </html>
