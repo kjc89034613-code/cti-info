@@ -197,6 +197,17 @@
   .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; font-size: 15px; font-family: inherit; }
   .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
   .field input.field-big { min-height: 80px; padding: 12px; }
+  /* 커스텀 자동완성 */
+  .ac-wrap { position: relative; }
+  .ac-list {
+    display: none; position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border-strong); border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto; z-index: 10;
+  }
+  .ac-list.show { display: block; }
+  .ac-item { padding: 11px 13px; font-size: 14.5px; cursor: pointer; border-bottom: 1px solid var(--divider); }
+  .ac-item:last-child { border-bottom: 0; }
+  .ac-item:hover, .ac-item.active { background: var(--accent-soft); color: var(--accent); }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
   .btn-cancel { background: #f1f5f9; color: var(--text); border: 0; border-radius: 9px; padding: 11px 20px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
@@ -296,14 +307,14 @@
 <div class="modal-bg" id="addModal">
   <div class="modal">
     <h2>신규 CTI 등록</h2>
-    <div class="field"><label>내선번호 *</label><input id="newExt" list="dl-ext" placeholder="예: 3001"></div>
-    <div class="field"><label>기존 사용 현장</label><input id="newSite" list="dl-site" placeholder="예: 아크로 삼성"></div>
+    <div class="field"><label>내선번호 *</label>
+      <div class="ac-wrap"><input id="newExt" autocomplete="off" placeholder="예: 3001"><div class="ac-list" id="ac-newExt"></div></div></div>
+    <div class="field"><label>기존 사용 현장</label>
+      <div class="ac-wrap"><input id="newSite" autocomplete="off" placeholder="예: 아크로 삼성"><div class="ac-list" id="ac-newSite"></div></div></div>
     <div class="field"><label>반납일</label><input type="date" id="newReturnDate"></div>
-    <div class="field"><label>발송 현장</label><input id="newSendSite" list="dl-sendsite"></div>
+    <div class="field"><label>발송 현장</label>
+      <div class="ac-wrap"><input id="newSendSite" autocomplete="off"><div class="ac-list" id="ac-newSendSite"></div></div></div>
     <div class="field"><label>발송일</label><input type="date" id="newSendDate"></div>
-    <datalist id="dl-ext"></datalist>
-    <datalist id="dl-site"></datalist>
-    <datalist id="dl-sendsite"></datalist>
     <div class="field"><label>IP정보/주소/비고</label><input id="newIp" class="field-big" placeholder="예: 10.174.3 / 서울 강남 / 교체예정"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddModal()">취소</button>
@@ -553,20 +564,40 @@ async function deleteRow(id) {
 }
 
 // ===== 신규 등록 =====
-function fillDatalist(id, values) {
-  const dl = document.getElementById(id);
-  if (!dl) return;
-  const uniq = [...new Set(values.filter(Boolean))].sort();
-  dl.innerHTML = uniq.map(v => `<option value="${esc(v)}">`).join('');
+// ===== 커스텀 자동완성 (모바일 포함 모든 기기 지원) =====
+function setupAutocomplete(inputId, listId, getValues) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  if (!input || !list || input._acBound) return;
+  input._acBound = true;
+
+  function renderList() {
+    const q = input.value.trim().toLowerCase();
+    const all = [...new Set(getValues().filter(Boolean))].sort();
+    const matched = q ? all.filter(v => v.toLowerCase().includes(q)) : all;
+    if (matched.length === 0) { list.classList.remove('show'); return; }
+    list.innerHTML = matched.slice(0, 30).map(v => `<div class="ac-item">${esc(v)}</div>`).join('');
+    list.classList.add('show');
+    list.querySelectorAll('.ac-item').forEach(item => {
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        input.value = item.textContent;
+        list.classList.remove('show');
+      });
+    });
+  }
+  input.addEventListener('focus', renderList);
+  input.addEventListener('input', renderList);
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('show'), 150));
 }
 
 function openAddModal() {
   ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendDate']
     .forEach(id=>document.getElementById(id).value='');
-  // 기존 데이터에서 자동완성 후보 채우기
-  fillDatalist('dl-ext', data.map(r=>r.ext));
-  fillDatalist('dl-site', data.map(r=>r.site));
-  fillDatalist('dl-sendsite', data.map(r=>r.sendSite));
+  // 자동완성 후보 연결 (기존 데이터 기준)
+  setupAutocomplete('newExt', 'ac-newExt', () => data.map(r=>r.ext));
+  setupAutocomplete('newSite', 'ac-newSite', () => data.map(r=>r.site));
+  setupAutocomplete('newSendSite', 'ac-newSendSite', () => data.map(r=>r.sendSite));
   document.getElementById('addModal').classList.add('active');
   setTimeout(()=>document.getElementById('newExt').focus(), 50);
 }
