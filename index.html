@@ -162,6 +162,9 @@
   /* 컬럼 폭: 좁은 그룹(내선/반납/발송일/상태/관리) vs 넓은 그룹(현장명들/IP) */
   col.c-narrow { width: 9%; }
   col.c-wide { width: 14.5%; }
+  col.c-site { width: 11.6%; }   /* 현장 3개: 14.5% → 20% 축소 */
+  col.c-status { width: 4.5%; }  /* 상태: 9% → 50% 축소 */
+  col.c-ip { width: 23%; }       /* IP: 늘어난 공간 흡수 */
 
   /* 상태 뱃지 */
   .badge { display: inline-block; padding: 4px 13px; border-radius: 20px; font-size: 13.5px; font-weight: 700; }
@@ -265,15 +268,30 @@
     .cell-ext { font-size: 13.5px; }
     .badge { padding: 2px 7px; font-size: 11.5px; }
     .icon-btn svg { width: 17px; height: 17px; }
-    /* 모바일 표 컬럼폭: 내선/현장/IP·비고/관리 */
-    .m-col-ext { width: 17%; }
-    .m-col-site { width: 35%; }
-    .m-col-ip { width: 21%; }
-    .m-col-act { width: 27%; }
+    /* 모바일 표 컬럼폭: 내선(체크+번호)/현장/IP·비고 (관리 칸 없음) */
+    .m-col-ext2 { width: 30%; }
+    .m-col-site2 { width: 40%; }
+    .m-col-ip2 { width: 30%; }
     tbody td:nth-child(3) { white-space: normal; word-break: break-all; }
-    /* 관리칸 아이콘 간격 벌리기 (잘림 방지) */
-    .cell-actions { white-space: nowrap; padding: 6px 2px; text-align: center; overflow: visible; text-overflow: clip; }
-    .cell-actions .icon-btn { padding: 3px; margin: 0 6px; }
+
+    /* 상단 수정/삭제 버튼 바 */
+    .m-actionbar {
+      display: flex; gap: 8px; justify-content: flex-end;
+      padding: 10px 12px; background: #f4f5f8; border-bottom: 1px solid var(--border);
+    }
+    .m-btn {
+      border: 0; border-radius: 8px; padding: 8px 20px; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; color: #fff;
+    }
+    .m-btn.m-edit { background: var(--accent); }
+    .m-btn.m-del { background: var(--danger); }
+    .m-btn:disabled { background: #cbd0db; color: #fff; cursor: not-allowed; }
+
+    /* 내선번호 칸: 체크박스 + 번호 */
+    .cell-ext { display: flex; align-items: center; gap: 9px; justify-content: flex-start !important; padding-left: 12px !important; }
+    .m-check { display: inline-flex; align-items: center; }
+    .m-check input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); cursor: pointer; }
+    tr.row-sel { background: var(--accent-soft) !important; }
   }
 </style>
 </head>
@@ -334,6 +352,7 @@ const supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let data = [];
 let editingId = null;
 let mTab = 'use';
+let mSelectedId = null;  // 모바일에서 체크된 행 id
 
 function fromDb(r) {
   return {
@@ -480,8 +499,8 @@ function renderWebTable(rows) {
     }
     body = `<table>
       <colgroup>
-        <col class="c-narrow"><col class="c-wide"><col class="c-narrow"><col class="c-wide">
-        <col class="c-narrow"><col class="c-wide"><col class="c-wide"><col class="c-narrow"><col class="c-narrow">
+        <col class="c-narrow"><col class="c-site"><col class="c-narrow"><col class="c-site">
+        <col class="c-narrow"><col class="c-site"><col class="c-ip"><col class="c-status"><col class="c-narrow">
       </colgroup>
       <thead><tr>
         <th>내선번호</th><th class="col-from">기존 사용 현장</th><th>반납일</th><th class="col-send">발송 현장</th>
@@ -496,41 +515,59 @@ function renderWebTable(rows) {
   </div>`;
 }
 
-// 모바일: 4컬럼 표 (내선/현재현장/IP·비고/관리)
+// 모바일: 3컬럼 표 (체크박스+내선/현재현장/IP·비고), 상단에 수정/삭제 버튼 바
 function renderMobilePanel(cls, title, rows) {
   const isHold = cls === 'm-hold';
+  // 선택된 행이 이 패널에 있는지 (버튼 활성화 판단)
+  const selInThis = mSelectedId != null && rows.some(r => r.id === mSelectedId);
   let body = '';
   if (rows.length === 0) {
     body = `<div class="empty">해당 항목이 없습니다.</div>`;
   } else {
     let trs = '';
     for (const r of rows) {
-      // IP정보와 비고를 합쳐 표시 (둘 다 있으면 줄바꿈)
       const ipNote = [esc(r.ip), esc(r.note)].filter(Boolean).join(' / ');
-      trs += `<tr>
-        <td class="cell-ext">${esc(r.ext)}</td>
+      const checked = (mSelectedId === r.id) ? 'checked' : '';
+      trs += `<tr class="${mSelectedId===r.id?'row-sel':''}">
+        <td class="cell-ext">
+          <label class="m-check"><input type="checkbox" ${checked} onchange="mSelectRow(${r.id}, this)"></label>
+          <span>${esc(r.ext)}</span>
+        </td>
         <td>${esc(curSite(r))}</td>
         <td>${ipNote}</td>
-        <td class="cell-actions">
-          <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
-          <button class="icon-btn del" onclick="deleteRow(${r.id})" title="삭제">${ICON_DEL}</button>
-        </td>
       </tr>`;
     }
     body = `<table>
       <colgroup>
-        <col class="m-col-ext"><col class="m-col-site"><col class="m-col-ip"><col class="m-col-act">
+        <col class="m-col-ext2"><col class="m-col-site2"><col class="m-col-ip2">
       </colgroup>
       <thead><tr>
-        <th>내선번호</th><th>현재 사용 현장</th><th>IP정보/비고</th><th>관리</th>
+        <th>내선번호</th><th>현재 사용 현장</th><th>IP정보/비고</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
   }
+  // 상단 버튼 바 (체크된 행이 있을 때만 활성화)
+  const dis = selInThis ? '' : 'disabled';
   return `<div class="panel ${cls} ${isHold?'hold':''} ${cls==='m-'+mTab?'active':''}">
-    <div class="panel-head">${title}<span class="count">${rows.length}</span></div>
+    <div class="m-actionbar">
+      <button class="m-btn m-edit" ${dis} onclick="mEditSelected()">수정</button>
+      <button class="m-btn m-del" ${dis} onclick="mDelSelected()">삭제</button>
+    </div>
     <div class="panel-body">${body}</div>
   </div>`;
+}
+
+// 모바일 행 선택 (체크박스, 단일 선택)
+function mSelectRow(id, el) {
+  mSelectedId = (el.checked) ? id : null;
+  render();
+}
+function mEditSelected() {
+  if (mSelectedId != null) startEdit(mSelectedId);
+}
+function mDelSelected() {
+  if (mSelectedId != null) { const id = mSelectedId; mSelectedId = null; deleteRow(id); }
 }
 
 // ===== 수정/저장/삭제 =====
