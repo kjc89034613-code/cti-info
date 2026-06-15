@@ -196,6 +196,7 @@
   .field label { display: block; font-size: 13.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
   .field input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; font-size: 15px; font-family: inherit; }
   .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .field input.field-big { min-height: 80px; padding: 12px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
   .btn-cancel { background: #f1f5f9; color: var(--text); border: 0; border-radius: 9px; padding: 11px 20px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
@@ -295,13 +296,15 @@
 <div class="modal-bg" id="addModal">
   <div class="modal">
     <h2>신규 CTI 등록</h2>
-    <div class="field"><label>내선번호 *</label><input id="newExt" placeholder="예: 3001"></div>
-    <div class="field"><label>기존 사용 현장</label><input id="newSite" placeholder="예: 아크로 삼성"></div>
+    <div class="field"><label>내선번호 *</label><input id="newExt" list="dl-ext" placeholder="예: 3001"></div>
+    <div class="field"><label>기존 사용 현장</label><input id="newSite" list="dl-site" placeholder="예: 아크로 삼성"></div>
     <div class="field"><label>반납일</label><input type="date" id="newReturnDate"></div>
-    <div class="field"><label>발송 현장</label><input id="newSendSite"></div>
+    <div class="field"><label>발송 현장</label><input id="newSendSite" list="dl-sendsite"></div>
     <div class="field"><label>발송일</label><input type="date" id="newSendDate"></div>
-    <div class="field"><label>IP 정보</label><input id="newIp" placeholder="예: 10.174.3"></div>
-    <div class="field"><label>비고</label><input id="newNote"></div>
+    <datalist id="dl-ext"></datalist>
+    <datalist id="dl-site"></datalist>
+    <datalist id="dl-sendsite"></datalist>
+    <div class="field"><label>IP정보/주소/비고</label><input id="newIp" class="field-big" placeholder="예: 10.174.3 / 서울 강남 / 교체예정"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddModal()">취소</button>
       <button class="btn3d btn-add" onclick="confirmAdd()">등록</button>
@@ -378,7 +381,9 @@ function getFiltered() {
       (r.site||'').toLowerCase().includes(q) ||
       (r.sendSite||'').toLowerCase().includes(q) ||
       (r.ip||'').toLowerCase().includes(q) ||
-      (r.note||'').toLowerCase().includes(q)
+      (r.note||'').toLowerCase().includes(q) ||
+      (r.returnDate||'').includes(q) ||
+      (r.sendDate||'').includes(q)
     );
   }
   return [...rows].sort((a,b)=>(parseInt(a.ext)||0)-(parseInt(b.ext)||0));
@@ -438,7 +443,7 @@ function renderWebTable(rows) {
           <td class="col-send" data-label="발송 현장"><input value="${esc(r.sendSite)}" data-f="sendSite"></td>
           <td data-label="발송일"><input type="date" value="${esc(r.sendDate)}" data-f="sendDate"></td>
           <td class="col-cur" data-label="현재 사용 현장">${esc(curSite(r))}</td>
-          <td data-label="IP 정보"><input value="${esc(r.ip)}" data-f="ip" placeholder="IP"></td>
+          <td data-label="IP정보/주소/비고"><input value="${esc(r.ip)}" data-f="ip" placeholder="IP/주소" style="margin-bottom:4px"><input value="${esc(r.note)}" data-f="note" placeholder="비고"></td>
           <td data-label="상태">${badge}</td>
           <td class="cell-actions">
             <button class="icon-btn save" onclick="saveRow(${r.id})">저장</button>
@@ -453,7 +458,7 @@ function renderWebTable(rows) {
           <td class="col-send" data-label="발송 현장">${esc(r.sendSite)}</td>
           <td data-label="발송일">${esc(r.sendDate)}</td>
           <td class="col-cur" data-label="현재 사용 현장">${esc(curSite(r))}</td>
-          <td data-label="IP 정보">${esc(r.ip)}</td>
+          <td data-label="IP정보/주소/비고">${esc([r.ip, r.note].filter(Boolean).join(' / '))}</td>
           <td data-label="상태">${badge}</td>
           <td class="cell-actions">
             <button class="icon-btn edit" onclick="startEdit(${r.id})" title="수정">${ICON_EDIT}</button>
@@ -469,7 +474,7 @@ function renderWebTable(rows) {
       </colgroup>
       <thead><tr>
         <th>내선번호</th><th class="col-from">기존 사용 현장</th><th>반납일</th><th class="col-send">발송 현장</th>
-        <th>발송일</th><th class="col-cur">현재 사용 현장</th><th>IP 정보</th><th>상태</th><th>관리</th>
+        <th>발송일</th><th class="col-cur">현재 사용 현장</th><th>IP정보/주소/비고</th><th>상태</th><th>관리</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
@@ -548,9 +553,20 @@ async function deleteRow(id) {
 }
 
 // ===== 신규 등록 =====
+function fillDatalist(id, values) {
+  const dl = document.getElementById(id);
+  if (!dl) return;
+  const uniq = [...new Set(values.filter(Boolean))].sort();
+  dl.innerHTML = uniq.map(v => `<option value="${esc(v)}">`).join('');
+}
+
 function openAddModal() {
-  ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendDate','newNote']
+  ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendDate']
     .forEach(id=>document.getElementById(id).value='');
+  // 기존 데이터에서 자동완성 후보 채우기
+  fillDatalist('dl-ext', data.map(r=>r.ext));
+  fillDatalist('dl-site', data.map(r=>r.site));
+  fillDatalist('dl-sendsite', data.map(r=>r.sendSite));
   document.getElementById('addModal').classList.add('active');
   setTimeout(()=>document.getElementById('newExt').focus(), 50);
 }
@@ -567,7 +583,7 @@ async function confirmAdd() {
     sendSite: document.getElementById('newSendSite').value.trim(),
     sendIp: '',
     sendDate: document.getElementById('newSendDate').value,
-    note: document.getElementById('newNote').value.trim(),
+    note: '',
   };
   try {
     const { data: ins, error } = await supa.from('cti_phones').insert(toDb(newRow)).select().single();
@@ -579,14 +595,34 @@ async function confirmAdd() {
 // ===== 엑셀 다운로드 =====
 function exportExcel() {
   const rows = getFiltered();
-  const headers = ['내선번호','기존 사용 현장','반납일','발송 현장','발송일','현재 사용 현장','IP 정보','상태','비고'];
+  const headers = ['내선번호','기존 사용 현장','반납일','발송 현장','발송일','현재 사용 현장','IP정보/주소/비고','상태'];
   const aoa = [headers];
   for (const r of rows) {
     const st = statusOf(r)==='use' ? '사용중' : '보유중';
-    aoa.push([r.ext, r.site, r.returnDate, r.sendSite, r.sendDate, curSite(r), r.ip, st, r.note]);
+    const ipNote = [r.ip, r.note].filter(Boolean).join(' / ');
+    aoa.push([r.ext, r.site, r.returnDate, r.sendSite, r.sendDate, curSite(r), ipNote, st]);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:10},{wch:18},{wch:13},{wch:18},{wch:13},{wch:18},{wch:14},{wch:9},{wch:16}];
+  ws['!cols'] = [{wch:10},{wch:18},{wch:13},{wch:18},{wch:13},{wch:18},{wch:22},{wch:9}];
+
+  // 셀 스타일: 맑은 고딕 9pt, 가운데 정렬, 실선 테두리
+  const thin = { style: 'thin', color: { rgb: '000000' } };
+  const border = { top: thin, bottom: thin, left: thin, right: thin };
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+      const isHeader = (R === 0);
+      ws[addr].s = {
+        font: { name: '맑은 고딕', sz: 9, bold: isHeader },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border: border,
+        fill: isHeader ? { fgColor: { rgb: 'E6E8EE' } } : undefined,
+      };
+    }
+  }
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'CTI현황');
   XLSX.writeFile(wb, `CTI_전화기_현황_${new Date().toISOString().slice(0,10)}.xlsx`);
