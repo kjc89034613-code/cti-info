@@ -96,6 +96,10 @@
   .stat.use .num { background: var(--accent); }
   .stat.hold .num { background: #c2410c; }
   .lbl-m { display: none; }  /* 모바일 짧은 라벨은 기본 숨김 */
+  .m-only { display: none; }  /* 모바일 전용 버튼은 데스크톱에서 숨김 */
+  .btn-medit { background: linear-gradient(180deg,#6366f1,#4f46e5); box-shadow:0 4px 0 #3730a3; }
+  .btn-mdel { background: linear-gradient(180deg,#ef4444,#dc2626); box-shadow:0 4px 0 #991b1b; }
+  .btn-medit:disabled, .btn-mdel:disabled { background:#cbd0db; box-shadow:0 2px 0 #aeb4c0; cursor:not-allowed; }
 
   /* 모바일 탭 (웹에서는 숨김) */
   .mtabs { display: none; gap: 2px; margin-bottom: 18px; background: #ececef; padding: 4px; border-radius: 11px; }
@@ -164,7 +168,8 @@
   col.c-wide { width: 14.5%; }
   col.c-site { width: 11.6%; }   /* 현장 3개: 14.5% → 20% 축소 */
   col.c-status { width: 4.5%; }  /* 상태: 9% → 50% 축소 */
-  col.c-ip { width: 23%; }       /* IP: 늘어난 공간 흡수 */
+  col.c-act { width: 2.7%; }     /* 관리: 9% → 70% 축소 */
+  col.c-ip { width: 27.3%; }     /* IP: 늘어난 공간 흡수 */
 
   /* 상태 뱃지 */
   .badge { display: inline-block; padding: 4px 13px; border-radius: 20px; font-size: 13.5px; font-weight: 700; }
@@ -174,10 +179,14 @@
   /* 관리 아이콘 버튼 (예전 형태: 아이콘) */
   .cell-actions { white-space: nowrap; }
   .icon-btn {
-    background: transparent; border: 0; padding: 6px; cursor: pointer; border-radius: 7px;
+    background: transparent; border: 0; padding: 4px; cursor: pointer; border-radius: 7px;
     display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
   }
-  .icon-btn svg { width: 19px; height: 19px; }
+  .icon-btn svg { width: 17px; height: 17px; }
+  /* 관리칸 좁음: 수정/삭제 아이콘 세로 배치 */
+  .panel.web-only .cell-actions { text-align: center; line-height: 1; overflow: visible; text-overflow: clip; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
+  .panel.web-only .cell-actions .icon-btn { padding: 4px 2px; }
+  .panel.web-only .cell-actions .icon-btn { display: block; margin: 1px auto; padding: 3px; }
   .icon-btn.edit { color: var(--accent); }
   .icon-btn.edit:hover { background: var(--accent-soft); }
   .icon-btn.del { color: var(--danger); }
@@ -227,20 +236,23 @@
     .page-header h1 { font-size: 20px; }
     .header-line { margin-bottom: 13px; }
 
-    /* 툴바: 검색 + 신규등록 한 줄, 통계는 다음 줄 */
-    .toolbar { gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
-    .toolbar input[type="search"] { flex: 1 1 140px; min-width: 140px; height: 32px; order: 1; font-size: 13px; padding: 0 11px; }
+    /* 툴바: 통계(위) → 검색+신규등록/수정/삭제(아래 한 줄) */
+    .toolbar { gap: 6px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar input[type="search"] { flex: 1 1 100px; min-width: 90px; height: 34px; order: 2; font-size: 13px; padding: 0 10px; }
     .t-spacer { display: none; }
-    .btn-add { order: 2; height: 32px; padding: 0 16px; flex: 0 0 auto; white-space: nowrap;
-      align-self: auto; font-size: 13px; border-radius: 8px;
+    .btn-add { order: 3; height: 34px; padding: 0 11px; flex: 0 0 auto; white-space: nowrap;
+      align-self: auto; font-size: 12.5px; border-radius: 8px;
       box-shadow: 0 2px 0 #3730a3, 0 3px 5px rgba(79,70,229,0.28); }
     .btn-add:active { box-shadow: 0 1px 0 #3730a3; }
+    .m-only { display: inline-block; order: 4; height: 34px; padding: 0 12px; font-size: 12.5px; border-radius: 8px; color:#fff; white-space: nowrap; }
+    .btn-medit { order: 4; }
+    .btn-mdel { order: 5; }
     .btn-excel { display: none; }  /* 모바일에선 엑셀 버튼 숨김 */
-    .stats { order: 3; flex: 1 1 100%; width: 100%; gap: 7px; margin: 0 0 12px; }
+    .stats { order: 1; flex: 1 1 100%; width: 100%; gap: 7px; margin: 0 0 10px; }
 
     /* 통계를 탭처럼: 한 줄 3등분, 누르면 전환 */
     .stat {
-      flex: 1 1 0; justify-content: center; height: 46px; padding: 0 6px; gap: 6px;
+      flex: 1 1 0; justify-content: center; height: 44px; padding: 0 6px; gap: 6px;
       cursor: pointer; border-radius: 9px;
     }
     .stat .label { font-size: 13.5px; }
@@ -269,9 +281,9 @@
     .badge { padding: 2px 7px; font-size: 11.5px; }
     .icon-btn svg { width: 17px; height: 17px; }
     /* 모바일 표 컬럼폭: 내선(체크+번호)/현장/IP·비고 (관리 칸 없음) */
-    .m-col-ext2 { width: 30%; }
-    .m-col-site2 { width: 40%; }
-    .m-col-ip2 { width: 30%; }
+    .m-col-ext2 { width: 25%; }
+    .m-col-site2 { width: 28%; }
+    .m-col-ip2 { width: 47%; }
     tbody td:nth-child(3) { white-space: normal; word-break: break-all; }
 
     /* 상단 수정/삭제 버튼 바 */
@@ -287,10 +299,11 @@
     .m-btn.m-del { background: var(--danger); }
     .m-btn:disabled { background: #cbd0db; color: #fff; cursor: not-allowed; }
 
-    /* 내선번호 칸: 체크박스 + 번호 */
-    .cell-ext { display: flex; align-items: center; gap: 9px; justify-content: flex-start !important; padding-left: 12px !important; }
-    .m-check { display: inline-flex; align-items: center; }
-    .m-check input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); cursor: pointer; }
+    /* 내선번호 칸: 체크박스 | 번호 (분리) */
+    .cell-ext { display: flex; align-items: center; gap: 0 !important; justify-content: flex-start !important; padding: 9px 4px !important; }
+    .m-check { display: inline-flex; align-items: center; justify-content: center; width: 26px; flex: 0 0 26px; border-right: 1px solid var(--border); margin-right: 8px; }
+    .m-check input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; margin: 0; }
+    .cell-ext > span { flex: 1; text-align: center; }
     tr.row-sel { background: var(--accent-soft) !important; }
   }
 </style>
@@ -315,16 +328,18 @@
     <div class="stat use" onclick="mStatTab('use')"><span class="label"><span class="lbl-web">사용 수량</span><span class="lbl-m">사용중</span></span><span class="num" id="statUse">0</span></div>
     <div class="stat hold" onclick="mStatTab('hold')"><span class="label"><span class="lbl-web">보유 수량</span><span class="lbl-m">보유중</span></span><span class="num" id="statHold">0</span></div>
   </div>
-  <button class="btn3d btn-add" onclick="openAddModal()">등록</button>
+  <button class="btn3d btn-add" onclick="openAddModal()"><span class="lbl-web">등록</span><span class="lbl-m">신규등록</span></button>
+  <button class="btn3d btn-medit m-only" disabled onclick="mEditSelected()">수정</button>
+  <button class="btn3d btn-mdel m-only" disabled onclick="mDelSelected()">삭제</button>
   <button class="btn3d btn-excel" onclick="exportExcel()">엑셀 다운로드</button>
 </div>
 
 <div class="panels" id="panels"></div>
 
-<!-- 신규 등록 모달 -->
+<!-- 신규 등록 / 수정 모달 -->
 <div class="modal-bg" id="addModal">
   <div class="modal">
-    <h2>신규 CTI 등록</h2>
+    <h2 id="modalTitle">신규 CTI 등록</h2>
     <div class="field"><label>내선번호 *</label>
       <div class="ac-wrap"><input id="newExt" autocomplete="off" placeholder="예: 3001"><div class="ac-list" id="ac-newExt"></div></div></div>
     <div class="field"><label>기존 사용 현장</label>
@@ -336,7 +351,7 @@
     <div class="field"><label>IP정보/주소/비고</label><input id="newIp" class="field-big" placeholder="예: 10.174.3 / 서울 강남 / 교체예정"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddModal()">취소</button>
-      <button class="btn3d btn-add" onclick="confirmAdd()">등록</button>
+      <button class="btn3d btn-add" id="modalConfirmBtn" onclick="confirmModal()">등록</button>
     </div>
   </div>
 </div>
@@ -453,9 +468,14 @@ function render() {
     renderMobilePanel('m-hold', '보유중 CTI 내선', holdRows);
 
   applyMTab();
-}
 
-// 웹: 단일 통합 테이블 (9컬럼)
+  // 모바일 툴바 수정/삭제 버튼 활성화 (체크된 행이 있을 때만)
+  const hasSel = mSelectedId != null && data.some(r => r.id === mSelectedId);
+  const me = document.querySelector('.btn-medit');
+  const md = document.querySelector('.btn-mdel');
+  if (me) me.disabled = !hasSel;
+  if (md) md.disabled = !hasSel;
+}
 function renderWebTable(rows) {
   let body = '';
   if (rows.length === 0) {
@@ -500,7 +520,7 @@ function renderWebTable(rows) {
     body = `<table>
       <colgroup>
         <col class="c-narrow"><col class="c-site"><col class="c-narrow"><col class="c-site">
-        <col class="c-narrow"><col class="c-site"><col class="c-ip"><col class="c-status"><col class="c-narrow">
+        <col class="c-narrow"><col class="c-site"><col class="c-ip"><col class="c-status"><col class="c-act">
       </colgroup>
       <thead><tr>
         <th>내선번호</th><th class="col-from">기존 사용 현장</th><th>반납일</th><th class="col-send">발송 현장</th>
@@ -542,18 +562,13 @@ function renderMobilePanel(cls, title, rows) {
         <col class="m-col-ext2"><col class="m-col-site2"><col class="m-col-ip2">
       </colgroup>
       <thead><tr>
-        <th>내선번호</th><th>현재 사용 현장</th><th>IP정보/비고</th>
+        <th>내선번호</th><th>현재 사용 현장</th><th>IP정보/주소/비고</th>
       </tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
   }
-  // 상단 버튼 바 (체크된 행이 있을 때만 활성화)
-  const dis = selInThis ? '' : 'disabled';
+  // 패널 (수정/삭제 버튼은 상단 툴바로 이동)
   return `<div class="panel ${cls} ${isHold?'hold':''} ${cls==='m-'+mTab?'active':''}">
-    <div class="m-actionbar">
-      <button class="m-btn m-edit" ${dis} onclick="mEditSelected()">수정</button>
-      <button class="m-btn m-del" ${dis} onclick="mDelSelected()">삭제</button>
-    </div>
     <div class="panel-body">${body}</div>
   </div>`;
 }
@@ -564,7 +579,7 @@ function mSelectRow(id, el) {
   render();
 }
 function mEditSelected() {
-  if (mSelectedId != null) startEdit(mSelectedId);
+  if (mSelectedId != null) openEditModal(mSelectedId);
 }
 function mDelSelected() {
   if (mSelectedId != null) { const id = mSelectedId; mSelectedId = null; deleteRow(id); }
@@ -628,36 +643,73 @@ function setupAutocomplete(inputId, listId, getValues) {
   input.addEventListener('blur', () => setTimeout(() => list.classList.remove('show'), 150));
 }
 
+let modalEditId = null;  // null이면 신규등록, 값이 있으면 수정 모드
+
 function openAddModal() {
+  modalEditId = null;
+  document.getElementById('modalTitle').textContent = '신규 CTI 등록';
+  document.getElementById('modalConfirmBtn').textContent = '등록';
   ['newExt','newSite','newIp','newReturnDate','newSendSite','newSendDate']
     .forEach(id=>document.getElementById(id).value='');
-  // 자동완성 후보 연결 (기존 데이터 기준)
   setupAutocomplete('newExt', 'ac-newExt', () => data.map(r=>r.ext));
   setupAutocomplete('newSite', 'ac-newSite', () => data.map(r=>r.site));
   setupAutocomplete('newSendSite', 'ac-newSendSite', () => data.map(r=>r.sendSite));
   document.getElementById('addModal').classList.add('active');
   setTimeout(()=>document.getElementById('newExt').focus(), 50);
 }
-function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
 
-async function confirmAdd() {
+function openEditModal(id) {
+  const r = data.find(x=>x.id===id);
+  if (!r) return;
+  modalEditId = id;
+  document.getElementById('modalTitle').textContent = 'CTI 정보 수정';
+  document.getElementById('modalConfirmBtn').textContent = '저장';
+  document.getElementById('newExt').value = r.ext || '';
+  document.getElementById('newSite').value = r.site || '';
+  document.getElementById('newIp').value = [r.ip, r.note].filter(Boolean).join(' / ');
+  document.getElementById('newReturnDate').value = r.returnDate || '';
+  document.getElementById('newSendSite').value = r.sendSite || '';
+  document.getElementById('newSendDate').value = r.sendDate || '';
+  setupAutocomplete('newExt', 'ac-newExt', () => data.map(x=>x.ext));
+  setupAutocomplete('newSite', 'ac-newSite', () => data.map(x=>x.site));
+  setupAutocomplete('newSendSite', 'ac-newSendSite', () => data.map(x=>x.sendSite));
+  document.getElementById('addModal').classList.add('active');
+}
+
+function closeAddModal() { document.getElementById('addModal').classList.remove('active'); modalEditId = null; }
+
+async function confirmModal() {
   const ext = document.getElementById('newExt').value.trim();
   if (!ext) { alert('내선번호는 필수입니다.'); return; }
-  const newRow = {
+  const vals = {
     ext,
     site: document.getElementById('newSite').value.trim(),
     ip: document.getElementById('newIp').value.trim(),
     returnDate: document.getElementById('newReturnDate').value,
     sendSite: document.getElementById('newSendSite').value.trim(),
-    sendIp: '',
     sendDate: document.getElementById('newSendDate').value,
-    note: '',
   };
-  try {
-    const { data: ins, error } = await supa.from('cti_phones').insert(toDb(newRow)).select().single();
-    if (error) throw error;
-    data.push(fromDb(ins)); closeAddModal(); render(); toast('등록되었습니다');
-  } catch (e) { console.error(e); toast('⚠ 등록 실패: '+(e.message||e)); }
+
+  if (modalEditId == null) {
+    // 신규 등록
+    const newRow = { ...vals, sendIp: '', note: '' };
+    try {
+      const { data: ins, error } = await supa.from('cti_phones').insert(toDb(newRow)).select().single();
+      if (error) throw error;
+      data.push(fromDb(ins)); closeAddModal(); render(); toast('등록되었습니다');
+    } catch (e) { console.error(e); toast('⚠ 등록 실패: '+(e.message||e)); }
+  } else {
+    // 수정 저장
+    const idx = data.findIndex(r=>r.id===modalEditId);
+    if (idx < 0) { closeAddModal(); return; }
+    const merged = { ...data[idx], ...vals };  // ip 필드에 IP/주소/비고 통합 저장, note는 기존 유지 안 함
+    merged.note = '';  // IP칸에 비고까지 통합 입력하므로 note는 비움
+    try {
+      const { error } = await supa.from('cti_phones').update(toDb(merged)).eq('id', modalEditId);
+      if (error) throw error;
+      data[idx] = merged; mSelectedId = null; closeAddModal(); render(); toast('저장되었습니다');
+    } catch (e) { console.error(e); toast('⚠ 저장 실패: '+(e.message||e)); }
+  }
 }
 
 // ===== 엑셀 다운로드 =====
